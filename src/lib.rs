@@ -397,9 +397,9 @@ pub struct CapabilityEXPData {
 pub struct CapabilityVNDRData {
     /// Length of the Capability Structure, including cap_vndr/cap_nextptr/cap_length
     /// and the following vendor-specific data.
-    cap_length: u8,
+    pub cap_length: u8,
     /// Vendor-specific data.
-    data: [u8; 256],
+    pub data: [u8; 256],
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
