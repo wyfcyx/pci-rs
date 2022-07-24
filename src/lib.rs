@@ -428,8 +428,8 @@ pub enum CapabilityData {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Capability {
-    cap_ptr: u16,
-    data: CapabilityData,
+    pub cap_ptr: u16,
+    pub data: CapabilityData,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
