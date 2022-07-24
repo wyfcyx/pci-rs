@@ -9,7 +9,6 @@
  */
 // 此PCI驱动写得很垃圾 :)
 
-#![feature(alloc)]
 #![no_std]
 
 //! PCI bus management
@@ -94,7 +93,7 @@ impl CSpaceAccessMethod {
                 );
                 ops.read32(CONFIG_DATA as u32).to_le()
             }
-            CSpaceAccessMethod::MemoryMapped(ptr) => {
+            CSpaceAccessMethod::MemoryMapped(_ptr) => {
               //    // FIXME: Clarify whether the rules for GEP/GEPi forbid using regular .offset() here.
               //    ::core::intrinsics::volatile_load(::core::intrinsics::arith_offset(ptr, offset as usize))
 
@@ -141,7 +140,7 @@ impl CSpaceAccessMethod {
                 ops.write32(CONFIG_ADDRESS as u32, loc.encode() | (offset as u32 & 0b11111100));
                 ops.write32(CONFIG_DATA as u32, val.to_le())
             }
-            CSpaceAccessMethod::MemoryMapped(ptr) => {
+            CSpaceAccessMethod::MemoryMapped(_ptr) => {
               //    // FIXME: Clarify whether the rules for GEP/GEPi forbid using regular .offset() here.
               //    ::core::intrinsics::volatile_load(::core::intrinsics::arith_offset(ptr, offset as usize))
 
@@ -395,6 +394,15 @@ pub struct CapabilityEXPData {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct CapabilityVNDRData {
+    /// Length of the Capability Structure, including cap_vndr/cap_nextptr/cap_length
+    /// and the following vendor-specific data.
+    cap_length: u8,
+    /// Pointer to vendor-specific data.
+    data_ptr: *const u8,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum CapabilityData {
     PM(CapabilityPMData),     // Power Management
     AGP,                      // Accelerated Graphics Part
@@ -404,7 +412,7 @@ pub enum CapabilityData {
     CHSWP,                    // CompactPCI HotSwap
     PCIX,                     // PCI-X
     HP,                       // HyperTransport
-    VNDR,                     // Vendor-Specific
+    VNDR(CapabilityVNDRData), // Vendor-Specific
     DBG,                      // Debug port
     CCRC,                     // CompactPCI Central Resource Control
     SHPC,                     // PCI Standard Hot-Plug Controller
@@ -699,6 +707,15 @@ pub unsafe fn probe_function<T: PortOps>(
                         message_control: message_control,
                         message_address: addr,
                         message_data: data,
+                    })
+                }
+                0x09 => {
+                    let cap_length = am.read8(ops, loc, cap_pointer + 0x2);
+                    // except for cap_vndr/cap_nextptr/cap_length
+                    let data_ptr = (cap_pointer + 0x3) as *const u8;
+                    CapabilityData::VNDR(CapabilityVNDRData {
+                        cap_length,
+                        data_ptr,
                     })
                 }
                 0x10 => {

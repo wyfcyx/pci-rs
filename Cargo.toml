@@ -11,7 +11,7 @@ cargo-features = ["edition"]
 [package]
 name = "pci"
 version = "0.0.1"
-edition = "2018"
+edition = "2021"
 authors = ["Corey Richardson <corey@octayn.net>"]
 description = "Generic PCI scanning, configuration-space access, and header parsing"
 documentation = "https://doc.robigalia.org/pci"
