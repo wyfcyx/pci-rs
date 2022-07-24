@@ -398,8 +398,8 @@ pub struct CapabilityVNDRData {
     /// Length of the Capability Structure, including cap_vndr/cap_nextptr/cap_length
     /// and the following vendor-specific data.
     cap_length: u8,
-    /// Pointer to vendor-specific data.
-    data_ptr: *const u8,
+    /// Vendor-specific data.
+    data: [u8; 256],
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -710,12 +710,15 @@ pub unsafe fn probe_function<T: PortOps>(
                     })
                 }
                 0x09 => {
-                    let cap_length = am.read8(ops, loc, cap_pointer + 0x2);
+                    let cap_length = am.read8(ops, loc, cap_pointer + 0x2) as u16;
+                    let mut data = [0u8; 256];
                     // except for cap_vndr/cap_nextptr/cap_length
-                    let data_ptr = (cap_pointer + 0x3) as *const u8;
+                    for i in 0..cap_length - 3 {
+                        data[i as usize] = am.read8(ops, loc, cap_pointer + 0x3 + i);
+                    }
                     CapabilityData::VNDR(CapabilityVNDRData {
-                        cap_length,
-                        data_ptr,
+                        cap_length: cap_length as u8,
+                        data,
                     })
                 }
                 0x10 => {
